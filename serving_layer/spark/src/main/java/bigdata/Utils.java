@@ -7,6 +7,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -65,7 +66,14 @@ public class Utils {
 	
 	private static short[] convertByteArrayToShortArray (byte[] bytes) {
 		short[] shorts = new short[tileSize * tileSize];
-		ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN).asShortBuffer().get(shorts);
+		//ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN).asShortBuffer().get(shorts);
+		ByteBuffer byteBuffer = ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN);
+		int a = 0;
+		if(byteBuffer.remaining()>0) {
+			short s = byteBuffer.getShort();
+			a++;
+			shorts[a] = s;
+		}
 		return shorts;
 	}
 	
