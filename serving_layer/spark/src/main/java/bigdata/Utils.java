@@ -1,7 +1,12 @@
 package bigdata;
 
 import java.awt.image.BufferedImage;
+import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.RenderingHints;
+import java.awt.Transparency;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -285,14 +290,14 @@ public class Utils {
 
 			Graphics g = combinedImage.getGraphics();
 			g.drawImage(image1, z1.getxPos(), z1.getyPos(), null);
-			g.drawImage(image2, z2.getxPos(), z2.getyPos(), null);			
+			g.drawImage(image2, z2.getxPos(), z2.getyPos(), null);		
 			
 			return new ZoomTile(bufferedImageToByteStream(combinedImage), 0, 0, 0, 0, true);
 		}
 	};
 	
 	// convert PortableDataStream to short[]
-	public static PairFunction<Tuple2<String, ZoomTile>, String, byte[]> zoomOut1ReducerFinished = new PairFunction<Tuple2<String, ZoomTile>, String, byte[]>() {
+	public static PairFunction<Tuple2<String, ZoomTile>, String, byte[]> zoomOut1ReducerCorrection = new PairFunction<Tuple2<String, ZoomTile>, String, byte[]>() {
 
 		private static final long serialVersionUID = 2044592339629795646L;
 
@@ -304,7 +309,9 @@ public class Utils {
 				BufferedImage combinedImage = new BufferedImage(512, 512, BufferedImage.TYPE_INT_ARGB);
 				Graphics g = combinedImage.getGraphics();
 				g.drawImage(image, file._2.getxPos(), file._2.getyPos(), null);
+				
 				return new Tuple2<String, byte[]>(file._1, bufferedImageToByteStream(combinedImage));
+
 			} else {
 				return new Tuple2<String, byte[]>(file._1, file._2.getImage());
 			}
@@ -312,7 +319,61 @@ public class Utils {
 		
 	};
 	
+	// convert PortableDataStream to short[]
+	public static PairFunction<Tuple2<String, byte[]>, String, byte[]> zoomOut1ReducerFinished = new PairFunction<Tuple2<String, byte[]>, String, byte[]>() {
+
+		private static final long serialVersionUID = 2044592339629795646L;
+
+		@Override
+		public Tuple2<String, byte[]> call(Tuple2<String, byte[]> file) throws Exception {
+			BufferedImage image = byteStreamToBufferedImage(file._2);
+
+			return new Tuple2<String, byte[]>(file._1, bufferedImageToByteStream(resizeImage(image, 256, 256)));
+		}
+		
+	};
+	
 	public static final int realSizeTile(int zoomOutIndex) {
 		return (int) 256 * (int) Math.pow(2, zoomOutIndex);
+	}
+	
+	public static BufferedImage resizeImage (BufferedImage image, int areaWidth, int areaHeight) {
+	    float scaleX = (float) areaWidth / image.getWidth();
+	    float scaleY = (float) areaHeight / image.getHeight();
+	    float scale = Math.min(scaleX, scaleY);
+	    int w = Math.round(image.getWidth() * scale);
+	    int h = Math.round(image.getHeight() * scale);
+
+	    int type = image.getTransparency() == Transparency.OPAQUE ? BufferedImage.TYPE_INT_RGB : BufferedImage.TYPE_INT_ARGB;
+
+	    boolean scaleDown = scale < 1;
+
+	    if (scaleDown) {
+	        // multi-pass bilinear div 2
+	        int currentW = image.getWidth();
+	        int currentH = image.getHeight();
+	        BufferedImage resized = image;
+	        while (currentW > w || currentH > h) {
+	            currentW = Math.max(w, currentW / 2);
+	            currentH = Math.max(h, currentH / 2);
+
+	            BufferedImage temp = new BufferedImage(currentW, currentH, type);
+	            Graphics2D g2 = temp.createGraphics();
+	            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+	            g2.drawImage(resized, 0, 0, currentW, currentH, null);
+	            g2.dispose();
+	            resized = temp;
+	        }
+	        return resized;
+	    } else {
+	        Object hint = scale > 2 ? RenderingHints.VALUE_INTERPOLATION_BICUBIC : RenderingHints.VALUE_INTERPOLATION_BILINEAR;
+
+	        BufferedImage resized = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+	        Graphics2D g2 = resized.createGraphics();
+	        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, hint);
+	        g2.drawImage(image, 0, 0, w, h, null);
+	        g2.dispose();
+	        return resized;
+	    }
 	}
 }
