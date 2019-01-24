@@ -15,8 +15,9 @@ public class TPSpark {
 		JavaSparkContext context = new JavaSparkContext(conf);
 		
 		// input path
-		//String inputPath = "/user/lleduc/hgt/";
-		String inputPath = "/user/raw_data/dem3";
+		String inputPath = "/user/lleduc/hgt/";
+		//String inputPath = "/user/raw_data/dem3";
+		//String inputPath = "/user/philippot/test";
 		
 		// import files into a PairRDD <filename, stream>
 		JavaPairRDD<String, PortableDataStream> importedRDD = context.binaryFiles(inputPath);
@@ -33,13 +34,22 @@ public class TPSpark {
 		// we combine the sub-images with the same key, to get the full sub-images and get rid of the fragments
 		JavaPairRDD<String, byte[]> subImagesCombinedRDD = subImagesRDD.reduceByKey(Utils.combineImagesWithSameKey);
 		
-		System.out.println(subImagesCombinedRDD.count());
 		/*
+		System.out.println(subImagesCombinedRDD.count());
+		
 		subImagesCombinedRDD.foreach(file -> {
 			ImageIO.write(Utils.byteStreamToBufferedImage(file._2), "png", new File(file._1 + ".png"));
 		});
 		*/
-				
+		
+		JavaPairRDD<String, ZoomTile> zoomOut1MapRDD = subImagesCombinedRDD.mapToPair(Utils.zoomOut1Map);
+		
+		JavaPairRDD<String, ZoomTile> zoomOut1ReducedRDD = zoomOut1MapRDD.reduceByKey(Utils.zoomOut1Reducer);
+
+		zoomOut1ReducedRDD.foreach(file -> {
+			ImageIO.write(Utils.byteStreamToBufferedImage(file._2.getImage()), "png", new File(file._1 + ".png"));
+		});
+			
 		context.close();	
 	}
 }

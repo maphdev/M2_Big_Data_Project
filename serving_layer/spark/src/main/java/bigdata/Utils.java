@@ -2,6 +2,8 @@ package bigdata;
 
 import java.awt.image.BufferedImage;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -50,7 +52,7 @@ public class Utils {
 		Integer latValue = Integer.parseInt(fileName.substring(4, 7));
 		
 		if (longLabel.equals("n")) {
-			longValue = halfNumberTilesLong - longValue;
+			longValue = halfNumberTilesLong - longValue - 1;
 		} else if (longLabel.equals("s")) {
 			longValue = halfNumberTilesLong + longValue - 1;
 		}
@@ -58,7 +60,7 @@ public class Utils {
 		if (latLabel.equals("w")) {
 			latValue = halfNumberTilesLat - latValue;
 		} else if (latLabel.equals("e")) {
-			latValue = halfNumberTilesLat + latValue - 1;
+			latValue = halfNumberTilesLat + latValue;
 		}
 		
 		return new Tuple2<Integer, Integer>(longValue, latValue);
@@ -66,13 +68,8 @@ public class Utils {
 	
 	private static short[] convertByteArrayToShortArray (byte[] bytes) {
 		short[] shorts = new short[tileSize * tileSize];
-		//ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN).asShortBuffer().get(shorts);
-		ByteBuffer byteBuffer = ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN);
-		int a = 0;
-		if(byteBuffer.remaining()>0) {
-			short s = byteBuffer.getShort();
-			a++;
-			shorts[a] = s;
+		if (shorts.length == bytes.length/2){
+			ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN).asShortBuffer().get(shorts).rewind();
 		}
 		return shorts;
 	}
@@ -247,4 +244,52 @@ public class Utils {
 			return new Tuple2<Tuple2<Integer, Integer>, BufferedImage>(file._1, image);
 		}
 	};
+	    
+	// gives tiles a key corresponding to their future position
+	public static PairFunction<Tuple2<String, byte[]>, String, ZoomTile> zoomOut1Map = new PairFunction<Tuple2<String, byte[]>, String, ZoomTile>() {
+		private static final long serialVersionUID = 6295049499770038005L;
+
+		@Override
+		public Tuple2<String, ZoomTile> call(Tuple2<String, byte[]> file) throws Exception {
+
+			String coords[] = file._1.split("-");
+			
+	        int yTileForBase = Integer.parseInt(coords[0]);
+	        int xTileForBase = Integer.parseInt(coords[1]);
+	        	        	        
+			int yTileForTarget = yTileForBase / 2;
+			int xTileForTarget = xTileForBase / 2;
+			
+			String coordsTargetLabel = yTileForTarget + "-" + xTileForTarget;
+
+			int yPos = yTileForBase%2 == 0? 0: 256;
+			int xPos = xTileForBase%2 == 0? 0: 256;
+
+			return new Tuple2<String, ZoomTile>(coordsTargetLabel, new ZoomTile(file._2, xTileForTarget, yTileForTarget, xPos, yPos));
+		}
+	};
+	
+	// we combine all the images with the same key
+	public static Function2<ZoomTile, ZoomTile, ZoomTile> zoomOut1Reducer = new Function2<ZoomTile, ZoomTile, ZoomTile>() {
+
+		private static final long serialVersionUID = 2044592339629795644L;
+
+		@Override
+		public ZoomTile call(ZoomTile z1, ZoomTile z2) throws Exception {
+			BufferedImage image1 = byteStreamToBufferedImage(z1.getImage());
+			BufferedImage image2 = byteStreamToBufferedImage(z2.getImage());
+
+			BufferedImage combinedImage = new BufferedImage(512, 512, BufferedImage.TYPE_INT_ARGB);
+
+			Graphics g = combinedImage.getGraphics();
+			g.drawImage(image1, z1.getxPos(), z1.getyPos(), null);
+			g.drawImage(image2, z2.getxPos(), z2.getyPos(), null);
+			
+			return new ZoomTile(bufferedImageToByteStream(combinedImage), 0, 0, 0, 0);
+		}
+	};
+	
+	public static final int realSizeTile(int zoomOutIndex) {
+		return (int) 256 * (int) Math.pow(2, zoomOutIndex);
+	}
 }
