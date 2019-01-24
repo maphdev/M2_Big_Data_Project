@@ -46,10 +46,17 @@ public class TPSpark {
 		
 		JavaPairRDD<String, ZoomTile> zoomOut1ReducedRDD = zoomOut1MapRDD.reduceByKey(Utils.zoomOut1Reducer);
 
+		/*
 		zoomOut1ReducedRDD.foreach(file -> {
 			ImageIO.write(Utils.byteStreamToBufferedImage(file._2.getImage()), "png", new File(file._1 + ".png"));
 		});
-			
+		*/
+		
+		JavaPairRDD<String, byte[]> zoomOut1FinishedRDD = zoomOut1ReducedRDD.mapToPair(Utils.zoomOut1ReducerFinished);
+		zoomOut1FinishedRDD.foreach(file -> {
+			ImageIO.write(Utils.byteStreamToBufferedImage(file._2), "png", new File(file._1 + ".png"));
+		});
+		
 		context.close();	
 	}
 }

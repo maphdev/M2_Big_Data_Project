@@ -2,14 +2,11 @@ package bigdata;
 
 import java.awt.image.BufferedImage;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -18,6 +15,7 @@ import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.input.PortableDataStream;
+
 import scala.Tuple2;
 
 public class Utils {
@@ -264,8 +262,12 @@ public class Utils {
 
 			int yPos = yTileForBase%2 == 0? 0: 256;
 			int xPos = xTileForBase%2 == 0? 0: 256;
+			
+			if (coordsTargetLabel.equals("110-417")) {
+				System.out.println(yPos + " " + xPos);
+			}
 
-			return new Tuple2<String, ZoomTile>(coordsTargetLabel, new ZoomTile(file._2, xTileForTarget, yTileForTarget, xPos, yPos));
+			return new Tuple2<String, ZoomTile>(coordsTargetLabel, new ZoomTile(file._2, xTileForTarget, yTileForTarget, xPos, yPos, false));
 		}
 	};
 	
@@ -283,10 +285,31 @@ public class Utils {
 
 			Graphics g = combinedImage.getGraphics();
 			g.drawImage(image1, z1.getxPos(), z1.getyPos(), null);
-			g.drawImage(image2, z2.getxPos(), z2.getyPos(), null);
+			g.drawImage(image2, z2.getxPos(), z2.getyPos(), null);			
 			
-			return new ZoomTile(bufferedImageToByteStream(combinedImage), 0, 0, 0, 0);
+			return new ZoomTile(bufferedImageToByteStream(combinedImage), 0, 0, 0, 0, true);
 		}
+	};
+	
+	// convert PortableDataStream to short[]
+	public static PairFunction<Tuple2<String, ZoomTile>, String, byte[]> zoomOut1ReducerFinished = new PairFunction<Tuple2<String, ZoomTile>, String, byte[]>() {
+
+		private static final long serialVersionUID = 2044592339629795646L;
+
+		@Override
+		public Tuple2<String, byte[]> call(Tuple2<String, ZoomTile> file) throws Exception {
+			if (file._2.isResized() == false) {
+				BufferedImage image = byteStreamToBufferedImage(file._2.getImage());
+				
+				BufferedImage combinedImage = new BufferedImage(512, 512, BufferedImage.TYPE_INT_ARGB);
+				Graphics g = combinedImage.getGraphics();
+				g.drawImage(image, file._2.getxPos(), file._2.getyPos(), null);
+				return new Tuple2<String, byte[]>(file._1, bufferedImageToByteStream(combinedImage));
+			} else {
+				return new Tuple2<String, byte[]>(file._1, file._2.getImage());
+			}
+		}
+		
 	};
 	
 	public static final int realSizeTile(int zoomOutIndex) {
