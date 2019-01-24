@@ -16,12 +16,10 @@ import scala.Tuple2;
 
 public class ZoomFunction {
 	
-	public static int zoomLevel;
+	private static int zoomLevel = 1;
 	
-	// ---------> PAIR FUNCTIONS
-
 	// gives tiles a key corresponding to their future position
-	public static PairFunction<Tuple2<String, byte[]>, String, ZoomTile> zoom0Map = new PairFunction<Tuple2<String, byte[]>, String, ZoomTile>() {
+	public static PairFunction<Tuple2<String, byte[]>, String, ZoomTile> zoomMap = new PairFunction<Tuple2<String, byte[]>, String, ZoomTile>() {
 		private static final long serialVersionUID = 6295049499770038005L;
 	
 		@Override
@@ -45,7 +43,7 @@ public class ZoomFunction {
 	};
 	
 	// we combine all the images with the same key
-	public static Function2<ZoomTile, ZoomTile, ZoomTile> zoom0Reducer = new Function2<ZoomTile, ZoomTile, ZoomTile>() {
+	public static Function2<ZoomTile, ZoomTile, ZoomTile> zoomReducer = new Function2<ZoomTile, ZoomTile, ZoomTile>() {
 	
 		private static final long serialVersionUID = 2044592339629795644L;
 	
@@ -65,7 +63,7 @@ public class ZoomFunction {
 	};
 	
 	// convert PortableDataStream to short[]
-	public static PairFunction<Tuple2<String, ZoomTile>, String, byte[]> zoom0Resize = new PairFunction<Tuple2<String, ZoomTile>, String, byte[]>() {
+	public static PairFunction<Tuple2<String, ZoomTile>, String, byte[]> zoomResize = new PairFunction<Tuple2<String, ZoomTile>, String, byte[]>() {
 	
 		private static final long serialVersionUID = 2044592339629795646L;
 	

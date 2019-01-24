@@ -33,30 +33,48 @@ public class TPSpark {
 		JavaPairRDD<String, byte[]> subImagesCombinedRDD = subImagesRDD.reduceByKey(Utils.combineImagesWithSameKey);
 		
 		// map-reduce to create zoom 1
-		JavaPairRDD<String, ZoomTile> zoom0MapRDD = subImagesCombinedRDD.mapToPair(ZoomFunction.zoom0Map);
-		JavaPairRDD<String, ZoomTile> zoom0ReducedRDD = zoom0MapRDD.reduceByKey(ZoomFunction.zoom0Reducer);
-		JavaPairRDD<String, byte[]> zoom0ResizedRDD = zoom0ReducedRDD.mapToPair(ZoomFunction.zoom0Resize);
+		JavaPairRDD<String, ZoomTile> zoom1MapRDD = subImagesCombinedRDD.mapToPair(ZoomFunction.zoomMap);
+		JavaPairRDD<String, ZoomTile> zoom1ReducedRDD = zoom1MapRDD.reduceByKey(ZoomFunction.zoomReducer);
+		JavaPairRDD<String, byte[]> zoom1ResizedRDD = zoom1ReducedRDD.mapToPair(ZoomFunction.zoomResize);
+		
+		JavaPairRDD<String, ZoomTile> zoom2MapRDD = zoom1ResizedRDD.mapToPair(ZoomFunction.zoomMap);
+		JavaPairRDD<String, ZoomTile> zoom2ReducedRDD = zoom2MapRDD.reduceByKey(ZoomFunction.zoomReducer);
+		JavaPairRDD<String, byte[]> zoom2ResizedRDD = zoom2ReducedRDD.mapToPair(ZoomFunction.zoomResize);
+		
+		JavaPairRDD<String, ZoomTile> zoom3MapRDD = zoom2ResizedRDD.mapToPair(ZoomFunction.zoomMap);
+		JavaPairRDD<String, ZoomTile> zoom3ReducedRDD = zoom3MapRDD.reduceByKey(ZoomFunction.zoomReducer);
+		JavaPairRDD<String, byte[]> zoom3ResizedRDD = zoom3ReducedRDD.mapToPair(ZoomFunction.zoomResize);
+		
+		JavaPairRDD<String, ZoomTile> zoom4MapRDD = zoom3ResizedRDD.mapToPair(ZoomFunction.zoomMap);
+		JavaPairRDD<String, ZoomTile> zoom4ReducedRDD = zoom4MapRDD.reduceByKey(ZoomFunction.zoomReducer);
+		JavaPairRDD<String, byte[]> zoom4ResizedRDD = zoom4ReducedRDD.mapToPair(ZoomFunction.zoomResize);
 		
 		// create the tiles
 		if (args.length != 0){
 			switch (args[0]) {
 		        case "0":  {
 			        	System.out.println("0");
-			        	createZoom0(subImagesCombinedRDD);
+			        	createZoom(subImagesCombinedRDD);
 			            break;
 		        	}
 		        case "1":  {
 		        		System.out.println("1");
-		        		ZoomFunction.zoomLevel = 1;
-		        		createZoom1(zoom0ResizedRDD);
-		        		subImagesCombinedRDD.unpersist();
+		        		createZoom(zoom1ResizedRDD);
 			            break;
 		        	}
 		        case "2":  {
-	        		System.out.println("1");
-	        		ZoomFunction.zoomLevel = 2;
-	        		createZoom1(zoom0ResizedRDD);
-	        		subImagesCombinedRDD.unpersist();
+	        		System.out.println("2");
+	        		createZoom(zoom2ResizedRDD);
+		            break;
+	        	}
+		        case "3":  {
+	        		System.out.println("3");
+	        		createZoom(zoom3ResizedRDD);
+		            break;
+	        	}
+		        case "4":  {
+	        		System.out.println("4");
+	        		createZoom(zoom4ResizedRDD);
 		            break;
 	        	}
 		        default: {
@@ -64,24 +82,11 @@ public class TPSpark {
 			            break;
 			        }
 				}
-		}
-
-		/*
-		zoomOut1ReducedRDD.foreach(file -> {
-			ImageIO.write(Utils.byteStreamToBufferedImage(file._2.getImage()), "png", new File(file._1 + ".png"));
-		});
-		*/		
-		
+		}		
 		context.close();	
 	}
 	
-	private static void createZoom0(JavaPairRDD<String, byte[]> rdd){
-		rdd.foreach(file -> {
-			ImageIO.write(Utils.byteStreamToBufferedImage(file._2), "png", new File(file._1 + ".png"));
-		});
-	}
-	
-	private static void createZoom1(JavaPairRDD<String, byte[]> rdd){
+	private static void createZoom(JavaPairRDD<String, byte[]> rdd){
 		rdd.foreach(file -> {
 			ImageIO.write(Utils.byteStreamToBufferedImage(file._2), "png", new File(file._1 + ".png"));
 		});
