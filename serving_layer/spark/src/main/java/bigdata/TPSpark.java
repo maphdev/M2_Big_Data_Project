@@ -5,6 +5,8 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.input.PortableDataStream;
 import scala.Tuple2;
 
@@ -29,11 +31,11 @@ public class TPSpark {
 		// map-reduce to create zoom 0
 		JavaPairRDD<String, byte[]> subImagesRDD = processedRDD.flatMapToPair(Utils.to256SizedTiles);
 		JavaPairRDD<String, byte[]> subImagesCombinedRDD = subImagesRDD.reduceByKey(Utils.combineImagesWithSameKey);
-
+		
 		// map-reduce to create zoom 1
-		JavaPairRDD<String, ZoomTile> zoom0MapRDD = subImagesCombinedRDD.mapToPair(Utils.zoom0Map);
-		JavaPairRDD<String, ZoomTile> zoom0ReducedRDD = zoom0MapRDD.reduceByKey(Utils.zoom0Reducer);
-		JavaPairRDD<String, byte[]> zoom0ResizedRDD = zoom0ReducedRDD.mapToPair(Utils.zoom0Resize);
+		JavaPairRDD<String, ZoomTile> zoom0MapRDD = subImagesCombinedRDD.mapToPair(ZoomFunction.zoom0Map);
+		JavaPairRDD<String, ZoomTile> zoom0ReducedRDD = zoom0MapRDD.reduceByKey(ZoomFunction.zoom0Reducer);
+		JavaPairRDD<String, byte[]> zoom0ResizedRDD = zoom0ReducedRDD.mapToPair(ZoomFunction.zoom0Resize);
 		
 		// create the tiles
 		if (args.length != 0){
@@ -45,10 +47,18 @@ public class TPSpark {
 		        	}
 		        case "1":  {
 		        		System.out.println("1");
+		        		ZoomFunction.zoomLevel = 1;
 		        		createZoom1(zoom0ResizedRDD);
 		        		subImagesCombinedRDD.unpersist();
 			            break;
 		        	}
+		        case "2":  {
+	        		System.out.println("1");
+	        		ZoomFunction.zoomLevel = 2;
+	        		createZoom1(zoom0ResizedRDD);
+	        		subImagesCombinedRDD.unpersist();
+		            break;
+	        	}
 		        default: {
 			        	System.out.println("Please specify a number corresponding to a level of zoom");
 			            break;
