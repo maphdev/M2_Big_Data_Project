@@ -70,29 +70,20 @@ public class Utils {
 	}
 	
 	private static short[] convertByteArrayToShortArray (byte[] bytes) {
+		// convert
 		short[] shorts = new short[tileSize * tileSize];
 		if (shorts.length == bytes.length/2){
 			ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN).asShortBuffer().get(shorts).rewind();
 		}
+		// correct
+		for (int i = 0; i < shorts.length; i++){
+			if (shorts[i] < 0)
+				shorts[i] = 0;
+			if (shorts[i] > 255)
+				shorts[i] = 255;
+		}
 		return shorts;
 	}
-	
-	// correct values if < 0 or > 255
-	public static PairFunction<Tuple2<Tuple2<Integer, Integer>, short[]>, Tuple2<Integer, Integer>, short[]> correctValues = new PairFunction<Tuple2<Tuple2<Integer, Integer>, short[]>, Tuple2<Integer, Integer>, short[]>() {
-		
-		private static final long serialVersionUID = 1337462003487647478L;
-
-		public Tuple2<Tuple2<Integer, Integer>, short[]> call(Tuple2<Tuple2<Integer, Integer>, short[]> file) throws Exception {
-			short[] tab = file._2;
-			for (int i = 0; i < tab.length; i++){
-				if (tab[i] < 0)
-					tab[i] = 0;
-				if (tab[i] > 255)
-					tab[i] = 255;
-			}
-			return new Tuple2<Tuple2<Integer, Integer>, short[]>(file._1, tab);
-		}
-	};
 
 	// get RDD with all 256*256 subImages from tiles, in byte[]
 	public static PairFlatMapFunction<Tuple2<Tuple2<Integer, Integer>, short[]>, String, byte[]> to256SizedTiles = new PairFlatMapFunction<Tuple2<Tuple2<Integer, Integer>, short[]>, String, byte[]>() {
@@ -249,7 +240,7 @@ public class Utils {
 	};
 	    
 	// gives tiles a key corresponding to their future position
-	public static PairFunction<Tuple2<String, byte[]>, String, ZoomTile> zoomOut1Map = new PairFunction<Tuple2<String, byte[]>, String, ZoomTile>() {
+	public static PairFunction<Tuple2<String, byte[]>, String, ZoomTile> zoom0Map = new PairFunction<Tuple2<String, byte[]>, String, ZoomTile>() {
 		private static final long serialVersionUID = 6295049499770038005L;
 
 		@Override
@@ -277,7 +268,7 @@ public class Utils {
 	};
 	
 	// we combine all the images with the same key
-	public static Function2<ZoomTile, ZoomTile, ZoomTile> zoomOut1Reducer = new Function2<ZoomTile, ZoomTile, ZoomTile>() {
+	public static Function2<ZoomTile, ZoomTile, ZoomTile> zoom0Reducer = new Function2<ZoomTile, ZoomTile, ZoomTile>() {
 
 		private static final long serialVersionUID = 2044592339629795644L;
 
@@ -297,38 +288,25 @@ public class Utils {
 	};
 	
 	// convert PortableDataStream to short[]
-	public static PairFunction<Tuple2<String, ZoomTile>, String, byte[]> zoomOut1ReducerCorrection = new PairFunction<Tuple2<String, ZoomTile>, String, byte[]>() {
+	public static PairFunction<Tuple2<String, ZoomTile>, String, byte[]> zoom0Resize = new PairFunction<Tuple2<String, ZoomTile>, String, byte[]>() {
 
 		private static final long serialVersionUID = 2044592339629795646L;
 
 		@Override
 		public Tuple2<String, byte[]> call(Tuple2<String, ZoomTile> file) throws Exception {
-			if (file._2.isResized() == false) {
-				BufferedImage image = byteStreamToBufferedImage(file._2.getImage());
-				
+			BufferedImage image = byteStreamToBufferedImage(file._2.getImage());
+			
+			if (file._2.isResized() == false) {				
 				BufferedImage combinedImage = new BufferedImage(512, 512, BufferedImage.TYPE_INT_ARGB);
 				Graphics g = combinedImage.getGraphics();
 				g.drawImage(image, file._2.getxPos(), file._2.getyPos(), null);
 				
-				return new Tuple2<String, byte[]>(file._1, bufferedImageToByteStream(combinedImage));
-
+				return new Tuple2<String, byte[]>(file._1, bufferedImageToByteStream(resizeImage(combinedImage, 256, 256)));
 			} else {
-				return new Tuple2<String, byte[]>(file._1, file._2.getImage());
+				return new Tuple2<String, byte[]>(file._1, bufferedImageToByteStream(resizeImage(image, 256, 256)));
 			}
-		}
-		
-	};
-	
-	// convert PortableDataStream to short[]
-	public static PairFunction<Tuple2<String, byte[]>, String, byte[]> zoomOut1ReducerFinished = new PairFunction<Tuple2<String, byte[]>, String, byte[]>() {
-
-		private static final long serialVersionUID = 2044592339629795646L;
-
-		@Override
-		public Tuple2<String, byte[]> call(Tuple2<String, byte[]> file) throws Exception {
-			BufferedImage image = byteStreamToBufferedImage(file._2);
-
-			return new Tuple2<String, byte[]>(file._1, bufferedImageToByteStream(resizeImage(image, 256, 256)));
+			
+			
 		}
 		
 	};
