@@ -3,10 +3,7 @@ import java.io.File;
 import javax.imageio.ImageIO;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.Function2;
-import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.input.PortableDataStream;
 import scala.Tuple2;
 
@@ -26,13 +23,13 @@ public class TPSpark {
 		JavaPairRDD<String, PortableDataStream> importedRDD = context.binaryFiles(inputPath);
 		
 		// now we convert the bytes stream into shorts
-		JavaPairRDD<Tuple2<Integer, Integer>, short[]> processedRDD = importedRDD.mapToPair(Utils.mapBytesToShorts);
+		JavaPairRDD<Tuple2<Integer, Integer>, short[]> processedRDD = importedRDD.mapToPair(BaseTiles.mapBytesToShorts);
 				
 		// map-reduce to create zoom 0
-		JavaPairRDD<String, byte[]> subImagesRDD = processedRDD.flatMapToPair(Utils.to256SizedTiles);
-		JavaPairRDD<String, byte[]> subImagesCombinedRDD = subImagesRDD.reduceByKey(Utils.combineImagesWithSameKey);
+		JavaPairRDD<String, byte[]> subImagesRDD = processedRDD.flatMapToPair(BaseTiles.to256SizedTiles);
+		JavaPairRDD<String, byte[]> subImagesCombinedRDD = subImagesRDD.reduceByKey(BaseTiles.combineImagesWithSameKey);
 		
-		// map-reduce to create zoom 1
+		// map-reduce to create zoom...
 		JavaPairRDD<String, ZoomTile> zoom1MapRDD = subImagesCombinedRDD.mapToPair(ZoomFunction.zoomMap);
 		JavaPairRDD<String, ZoomTile> zoom1ReducedRDD = zoom1MapRDD.reduceByKey(ZoomFunction.zoomReducer);
 		JavaPairRDD<String, byte[]> zoom1ResizedRDD = zoom1ReducedRDD.mapToPair(ZoomFunction.zoomResize);
