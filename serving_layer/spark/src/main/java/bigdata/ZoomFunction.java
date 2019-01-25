@@ -84,7 +84,7 @@ public class ZoomFunction {
 		
 	};
 
-	// ----------> HELPERS
+	// ---------> HELPERS
 	public static final int getTileSizeForZoom(int zoomOutIndex) {
 		return (int) 256 * (int) Math.pow(2, zoomOutIndex -1);
 	}
