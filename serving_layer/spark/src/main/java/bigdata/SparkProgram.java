@@ -7,7 +7,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.input.PortableDataStream;
 import scala.Tuple2;
 
-public class TPSpark {
+public class SparkProgram {
 
 	public static void main(String[] args) {
 		
