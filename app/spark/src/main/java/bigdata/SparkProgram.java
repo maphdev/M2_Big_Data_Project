@@ -1,4 +1,8 @@
 package bigdata;
+import java.io.File;
+
+import javax.imageio.ImageIO;
+
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -54,22 +58,27 @@ public class SparkProgram {
 		            break;
 	        	}
 		        case "0":  {
-			        	addZoomHbase(subImagesCombinedRDD, HBase.ZOOM_0_FAMILY);
-			            break;
+		        	//createZoomPNG(subImagesCombinedRDD);
+			        addZoomHbase(subImagesCombinedRDD, HBase.ZOOM_0_FAMILY);
+			        break;
 		        	}
 		        case "1":  {
-		        		addZoomHbase(zoom1ResizedRDD, HBase.ZOOM_1_FAMILY);
-			            break;
+	        		//createZoomPNG(zoom1ResizedRDD);
+		        	addZoomHbase(zoom1ResizedRDD, HBase.ZOOM_1_FAMILY);
+			        break;
 		        	}
 		        case "2":  {
+		        	//createZoomPNG(zoom2ResizedRDD);
 	        		addZoomHbase(zoom2ResizedRDD, HBase.ZOOM_2_FAMILY);
 		            break;
 	        	}
 		        case "3":  {
+		        	//createZoomPNG(zoom3ResizedRDD);
 	        		addZoomHbase(zoom3ResizedRDD, HBase.ZOOM_3_FAMILY);
 		            break;
 	        	}
 		        case "4":  {
+		        	//createZoomPNG(zoom4ResizedRDD);
 	        		addZoomHbase(zoom4ResizedRDD, HBase.ZOOM_4_FAMILY);
 		            break;
 	        	}
@@ -82,17 +91,28 @@ public class SparkProgram {
 		context.close();	
 	}
 	
-	/*
+	
 	private static void createZoomPNG(JavaPairRDD<String, byte[]> rdd){
 		rdd.foreach(file -> {
 			ImageIO.write(Utils.byteStreamToBufferedImage(file._2), "png", new File(file._1 + ".png"));
 		});
 	}
-	*/
+	
 	
 	private static void addZoomHbase(JavaPairRDD<String, byte[]> rdd, byte[] zoomLevel){
-		rdd.foreach(file -> {
-			HBase.addRow(file._1, file._2, zoomLevel);
+		rdd.foreachPartition(partition -> {
+			HBase.setUp();
+			System.out.println("-------hiiii-------");
+			partition.forEachRemaining(file -> {
+				try {
+					System.out.println("---------------");
+					HBase.addRow(file._1, file._2, zoomLevel);
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			});
 		});
+		
 	}
 }
