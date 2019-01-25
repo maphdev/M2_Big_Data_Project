@@ -1,9 +1,4 @@
 package bigdata;
-import java.io.File;
-import javax.imageio.ImageIO;
-
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.util.ToolRunner;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -49,41 +44,37 @@ public class SparkProgram {
 		JavaPairRDD<String, ZoomTile> zoom4ReducedRDD = zoom4MapRDD.reduceByKey(ZoomFunction.zoomReducer);
 		JavaPairRDD<String, byte[]> zoom4ResizedRDD = zoom4ReducedRDD.mapToPair(ZoomFunction.zoomResize);
 		
+		HBase.setUp();
+		
 		// create the tiles
 		if (args.length != 0){
 			switch (args[0]) {
-		        case "hbase":  {
-	        		System.out.println("hbase !");
-	        		ToolRunner.run(HBaseConfiguration.create(), new HBase.Create(), args);
+		        case "create-hbase":  {
+	        		HBase.createTable();
 		            break;
 	        	}
 		        case "0":  {
-			        	System.out.println("0");
-			        	createZoom(subImagesCombinedRDD);
+			        	addZoomHbase(subImagesCombinedRDD, HBase.ZOOM_0_FAMILY);
 			            break;
 		        	}
 		        case "1":  {
-		        		System.out.println("1");
-		        		createZoom(zoom1ResizedRDD);
+		        		addZoomHbase(zoom1ResizedRDD, HBase.ZOOM_1_FAMILY);
 			            break;
 		        	}
 		        case "2":  {
-	        		System.out.println("2");
-	        		createZoom(zoom2ResizedRDD);
+	        		addZoomHbase(zoom2ResizedRDD, HBase.ZOOM_2_FAMILY);
 		            break;
 	        	}
 		        case "3":  {
-	        		System.out.println("3");
-	        		createZoom(zoom3ResizedRDD);
+	        		addZoomHbase(zoom3ResizedRDD, HBase.ZOOM_3_FAMILY);
 		            break;
 	        	}
 		        case "4":  {
-	        		System.out.println("4");
-	        		createZoom(zoom4ResizedRDD);
+	        		addZoomHbase(zoom4ResizedRDD, HBase.ZOOM_4_FAMILY);
 		            break;
 	        	}
 		        default: {
-			        	System.out.println("Please specify a number corresponding to a level of zoom");
+			        	System.out.println("Unknown command");
 			            break;
 			        }
 				}
@@ -91,9 +82,17 @@ public class SparkProgram {
 		context.close();	
 	}
 	
-	private static void createZoom(JavaPairRDD<String, byte[]> rdd){
+	/*
+	private static void createZoomPNG(JavaPairRDD<String, byte[]> rdd){
 		rdd.foreach(file -> {
 			ImageIO.write(Utils.byteStreamToBufferedImage(file._2), "png", new File(file._1 + ".png"));
+		});
+	}
+	*/
+	
+	private static void addZoomHbase(JavaPairRDD<String, byte[]> rdd, byte[] zoomLevel){
+		rdd.foreach(file -> {
+			HBase.addRow(file._1, file._2, zoomLevel);
 		});
 	}
 }

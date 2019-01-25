@@ -1,8 +1,10 @@
 package bigdata;
 
 import java.io.IOException;
-
+import java.util.Iterator;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -10,51 +12,85 @@ import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.util.Tool;
 
-import ch.epfl.lamp.compiler.msil.util.Table;
-
-public class HBase {
+public class HBase extends Configured {		
 	private static final byte[] TABLE_NAME = Bytes.toBytes("team-rocket");
-    private static final byte[] ZOOM_0_FAMILY = Bytes.toBytes("zoom_0");
-    private static final byte[] NAME_COLUMN = Bytes.toBytes("name");
+    public static final byte[] ZOOM_0_FAMILY = Bytes.toBytes("zoom_0");
+    public static final byte[] ZOOM_1_FAMILY = Bytes.toBytes("zoom_1");
+    public static final byte[] ZOOM_2_FAMILY = Bytes.toBytes("zoom_2");
+    public static final byte[] ZOOM_3_FAMILY = Bytes.toBytes("zoom_3");
+    public static final byte[] ZOOM_4_FAMILY = Bytes.toBytes("zoom_4");
     private static final byte[] TILE_COLUMN = Bytes.toBytes("tile");
-
-	public static class Create extends Configured implements Tool {
-		
-		public static void createOrOverwrite(Admin admin, HTableDescriptor table) throws IOException {
-	        if (admin.tableExists(table.getTableName())) {
-	            admin.disableTable(table.getTableName());
-	            admin.deleteTable(table.getTableName());
-	        }
-	        admin.createTable(table);
-	    }
-
-	    public static void createTable(Connection connect) {
-	        try {
-	            final Admin admin = connect.getAdmin();
-	            
-	            HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(TABLE_NAME));
-	            HColumnDescriptor zoom0 = new HColumnDescriptor(ZOOM_0_FAMILY);
-	            
-	            tableDescriptor.addFamily(zoom0);
-	            
-	            createOrOverwrite(admin, tableDescriptor);
-	            
-	            admin.close();
-	        } catch (Exception e) {
-	            e.printStackTrace();
-	            System.exit(-1);
-	        }
-	    }
-
-	    public int run(String[] args) throws IOException {
-	        Connection connection = ConnectionFactory.createConnection(getConf());
-	        createTable(connection);
-	        return 0;
-	    }
+    
+    private static Connection connection;
+    private static Table table;
+    
+    public static void setUp() throws IOException{
+    	Configuration conf = HBaseConfiguration.create();
+  		connection = ConnectionFactory.createConnection(conf);
+  		table = connection.getTable(TableName.valueOf(TABLE_NAME));
+    }
+	
+    // create table
+    public static void createTable() {
+        try {
+            final Admin admin = connection.getAdmin();
+            
+            HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(TABLE_NAME));
+            HColumnDescriptor zoom0 = new HColumnDescriptor(ZOOM_0_FAMILY);
+            HColumnDescriptor zoom1 = new HColumnDescriptor(ZOOM_1_FAMILY);
+            HColumnDescriptor zoom2 = new HColumnDescriptor(ZOOM_2_FAMILY);
+            HColumnDescriptor zoom3 = new HColumnDescriptor(ZOOM_3_FAMILY);
+            HColumnDescriptor zoom4 = new HColumnDescriptor(ZOOM_4_FAMILY);
+            
+            tableDescriptor.addFamily(zoom0);
+            tableDescriptor.addFamily(zoom1);
+            tableDescriptor.addFamily(zoom2);
+            tableDescriptor.addFamily(zoom3);
+            tableDescriptor.addFamily(zoom4);
+            
+            createOrOverwrite(admin, tableDescriptor);
+            
+            admin.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+    }
+    
+	private static void createOrOverwrite(Admin admin, HTableDescriptor table) throws IOException {
+        if (admin.tableExists(table.getTableName())) {
+            admin.disableTable(table.getTableName());
+            admin.deleteTable(table.getTableName());
+        }
+        admin.createTable(table);
+    }
+	
+	// Add a row (tile)
+	public static void addRow(String tileName, byte[] data, byte[] family) throws Exception {		
+		Put put = new Put(Bytes.toBytes(tileName));
+		put.addColumn(family, TILE_COLUMN, data);
+		table.put(put);
 	}
 	
-    
+	public static int numberRowsPerFamily(byte[] family) throws IOException {
+		Scan scan = new Scan();
+	    scan.addFamily(family);
+	    
+	    ResultScanner resultScanner = table.getScanner(scan);
+	    Iterator<Result> iterator = resultScanner.iterator();
+	    
+	    int i = 0;
+	    while (iterator.hasNext())
+	    {
+	        iterator.next();
+	        i+= 1;
+	    }
+	    return i;
+	}
 }
