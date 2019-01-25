@@ -1,6 +1,9 @@
 package bigdata;
 import java.io.File;
 import javax.imageio.ImageIO;
+
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.util.ToolRunner;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -9,7 +12,7 @@ import scala.Tuple2;
 
 public class SparkProgram {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		
 		SparkConf conf = new SparkConf().setAppName("Spark");
 		JavaSparkContext context = new JavaSparkContext(conf);
@@ -23,11 +26,11 @@ public class SparkProgram {
 		JavaPairRDD<String, PortableDataStream> importedRDD = context.binaryFiles(inputPath);
 		
 		// now we convert the bytes stream into shorts
-		JavaPairRDD<Tuple2<Integer, Integer>, short[]> processedRDD = importedRDD.mapToPair(BaseTiles.mapBytesToShorts);
+		JavaPairRDD<Tuple2<Integer, Integer>, short[]> processedRDD = importedRDD.mapToPair(BaseFunction.mapBytesToShorts);
 				
 		// map-reduce to create zoom 0
-		JavaPairRDD<String, byte[]> subImagesRDD = processedRDD.flatMapToPair(BaseTiles.to256SizedTiles);
-		JavaPairRDD<String, byte[]> subImagesCombinedRDD = subImagesRDD.reduceByKey(BaseTiles.combineImagesWithSameKey);
+		JavaPairRDD<String, byte[]> subImagesRDD = processedRDD.flatMapToPair(BaseFunction.to256SizedTiles);
+		JavaPairRDD<String, byte[]> subImagesCombinedRDD = subImagesRDD.reduceByKey(BaseFunction.combineImagesWithSameKey);
 		
 		// map-reduce to create zoom...
 		JavaPairRDD<String, ZoomTile> zoom1MapRDD = subImagesCombinedRDD.mapToPair(ZoomFunction.zoomMap);
@@ -49,6 +52,11 @@ public class SparkProgram {
 		// create the tiles
 		if (args.length != 0){
 			switch (args[0]) {
+		        case "hbase":  {
+	        		System.out.println("hbase !");
+	        		ToolRunner.run(HBaseConfiguration.create(), new HBase.Create(), args);
+		            break;
+	        	}
 		        case "0":  {
 			        	System.out.println("0");
 			        	createZoom(subImagesCombinedRDD);

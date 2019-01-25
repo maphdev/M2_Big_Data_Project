@@ -12,7 +12,7 @@ import org.apache.spark.input.PortableDataStream;
 
 import scala.Tuple2;
 
-public class BaseTiles {
+public class BaseFunction {
 	
 	// convert PortableDataStream to short[]
 	public static PairFunction<Tuple2<String, PortableDataStream>, Tuple2<Integer, Integer>, short[]> mapBytesToShorts = new PairFunction<Tuple2<String, PortableDataStream>, Tuple2<Integer, Integer>, short[]>() {
