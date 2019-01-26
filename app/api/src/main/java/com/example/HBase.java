@@ -28,19 +28,43 @@ public class HBase extends Configured {
         table = connection.getTable(TableName.valueOf(TABLE_NAME));
     }
 
-    public static byte[] getImageFromHBase(String x, String y, String z) throws IOException {
+    public static byte[] getImageFromHBase(String x, String y, String z)  {
         //String tileName = "104-419";
         String tileName = y+"-"+x;
         byte[] row = Bytes.toBytes(tileName);
 
         Get get = new Get(row);
-        
-        get.addColumn(ZOOM_1_FAMILY, TILE_COLUMN);
 
-        Result res = table.get(get);
+        byte[] family;
+        switch (z) {
+            case "0":
+                family = ZOOM_0_FAMILY;
+                break;
+            case "1":
+                family = ZOOM_1_FAMILY;
+                break;
+                /*
+            case "2":
+                family = ZOOM_2_FAMILY;
+                break;
+                */
+            default:
+                return null;
+        }
 
-        byte[] tile = res.getValue(ZOOM_1_FAMILY, TILE_COLUMN);
+        get.addColumn(family, TILE_COLUMN);
 
-        return tile;
+        Result res = null;
+        try {
+            res = table.get(get);
+            if (res.isEmpty()) {
+                return HBase.getImageFromHBase("418", "104", "1");
+            } else {
+                byte[] tile = res.getValue(family, TILE_COLUMN);
+                return tile;
+            }
+        } catch (IOException e) {
+            return HBase.getImageFromHBase("418", "104", "1");
+        }
     }
 }

@@ -36,9 +36,10 @@ public class MyResource {
     public Response getImage(@PathParam("x") String x, @PathParam("y") String y, @PathParam("z") String z) throws IOException {
         HBase.setUp();
         byte[] tiles = HBase.getImageFromHBase(x,y,z);
-        if (tiles != null) {
+        if (tiles == null) {
+            return Response.ok(HBase.getImageFromHBase(Integer.toString(836), Integer.toString(207), Integer.toString(0))).build();
+        } else {
             return Response.ok(tiles).build();
         }
-        return Response.ok(tiles!=null).build();
     }
 }
