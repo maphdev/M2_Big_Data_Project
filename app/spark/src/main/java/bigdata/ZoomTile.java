@@ -15,15 +15,15 @@ public class ZoomTile implements Serializable {
 	private int yTile;
 	private int xPos;
 	private int yPos;
-	private boolean resized;
+	private boolean processedInMap;
 	
-	public ZoomTile(byte[] image, int xTile, int yTile, int xPos, int yPos, boolean resized) {
+	public ZoomTile(byte[] image, int xTile, int yTile, int xPos, int yPos, boolean processedInMap) {
 		this.image = image;
 		this.xTile = xTile;
 		this.yTile = yTile;
 		this.xPos = xPos;
 		this.yPos = yPos;
-		this.resized = resized;
+		this.processedInMap = processedInMap;
 	}
 
 	public byte[] getImage() {
@@ -66,12 +66,12 @@ public class ZoomTile implements Serializable {
 		this.yPos = yPos;
 	}
 	
-	public boolean isResized() {
-		return resized;
+	public boolean isProcessedInMap() {
+		return processedInMap;
 	}
 
-	public void setResized(boolean resized) {
-		this.resized = resized;
+	public void setProcessedInMap(boolean processedInMap) {
+		this.processedInMap = processedInMap;
 	}
 	
 	 private void writeObject(ObjectOutputStream os)
@@ -80,7 +80,7 @@ public class ZoomTile implements Serializable {
 		 os.writeInt(yTile);
 		 os.writeInt(xPos);
 		 os.writeInt(yPos);
-		 os.writeBoolean(resized);
+		 os.writeBoolean(processedInMap);
 		 os.writeObject(image);
 	 }
 
@@ -89,7 +89,7 @@ public class ZoomTile implements Serializable {
 		 this.yTile = is.readInt();
 		 this.xPos = is.readInt();
 		 this.yPos = is.readInt();
-		 this.resized = is.readBoolean();
+		 this.processedInMap = is.readBoolean();
 		 this.image = (byte[])is.readObject();
 	    }
 }

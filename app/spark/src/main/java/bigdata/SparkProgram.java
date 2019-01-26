@@ -17,8 +17,8 @@ public class SparkProgram {
 		JavaSparkContext context = new JavaSparkContext(conf);
 		
 		// input path
-		String inputPath = "/user/lleduc/hgt/";
-		//String inputPath = "/user/raw_data/dem3";
+		//String inputPath = "/user/lleduc/hgt/";
+		String inputPath = "/user/raw_data/dem3";
 		//String inputPath = "/user/philippot/test";
 		
 		// import files into a PairRDD <filename, stream>
@@ -82,6 +82,11 @@ public class SparkProgram {
 	        		addZoomHbase(zoom4ResizedRDD, HBase.ZOOM_4_FAMILY);
 		            break;
 	        	}
+		        case "test":  {
+		        	System.out.println("test");
+		    		ImageIO.write(HBase.saveImageFromHBase(), "png", new File("testSF" + ".png"));
+		        	break;
+		    	}
 		        default: {
 			        	System.out.println("Unknown command");
 			            break;
@@ -102,13 +107,10 @@ public class SparkProgram {
 	private static void addZoomHbase(JavaPairRDD<String, byte[]> rdd, byte[] zoomLevel){
 		rdd.foreachPartition(partition -> {
 			HBase.setUp();
-			System.out.println("-------hiiii-------");
 			partition.forEachRemaining(file -> {
 				try {
-					System.out.println("---------------");
 					HBase.addRow(file._1, file._2, zoomLevel);
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			});

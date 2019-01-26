@@ -64,7 +64,7 @@ public class ZoomFunction {
 		public Tuple2<String, byte[]> call(Tuple2<String, ZoomTile> file) throws Exception {
 			BufferedImage image = Utils.byteStreamToBufferedImage(file._2.getImage());
 			
-			if (file._2.isResized() == false) {				
+			if (file._2.isProcessedInMap() == false) {				
 				BufferedImage combinedImage = new BufferedImage(tmpTileSize, tmpTileSize, BufferedImage.TYPE_INT_ARGB);
 				Graphics g = combinedImage.getGraphics();
 				g.drawImage(image, file._2.getxPos(), file._2.getyPos(), null);

@@ -1,7 +1,12 @@
 package bigdata;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
+
+import javax.imageio.ImageIO;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -11,6 +16,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -92,5 +98,22 @@ public class HBase extends Configured {
 	        i+= 1;
 	    }
 	    return i;
+	}
+	
+	public static BufferedImage saveImageFromHBase() throws IOException {
+		String tileName = "104-419";
+		byte[] row = Bytes.toBytes(tileName);
+		
+		Get get = new Get(row);
+		get.addColumn(ZOOM_1_FAMILY, TILE_COLUMN);
+		
+		System.out.println("hello");
+		
+		Result res = table.get(get);
+		byte[] tile = res.getValue(ZOOM_1_FAMILY, TILE_COLUMN);
+		
+		System.out.println(tile);
+		
+		return Utils.byteStreamToBufferedImage(tile);
 	}
 }
