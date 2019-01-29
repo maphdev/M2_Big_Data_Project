@@ -1,8 +1,11 @@
 package bigdata;
 import java.io.File;
+import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.util.ToolRunner;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -12,109 +15,55 @@ import scala.Tuple2;
 public class SparkProgram {
 
 	public static void main(String[] args) throws Exception {
-		
+
 		SparkConf conf = new SparkConf().setAppName("Spark");
 		JavaSparkContext context = new JavaSparkContext(conf);
-		
+
 		// input path
 		//String inputPath = "/user/lleduc/hgt/";
 		String inputPath = "/user/raw_data/dem3";
 		//String inputPath = "/user/philippot/test";
-		
+
 		// import files into a PairRDD <filename, stream>
 		JavaPairRDD<String, PortableDataStream> importedRDD = context.binaryFiles(inputPath);
-		
+
 		// now we convert the bytes stream into shorts
 		JavaPairRDD<Tuple2<Integer, Integer>, short[]> processedRDD = importedRDD.mapToPair(BaseFunction.mapBytesToShorts);
-				
-		// map-reduce to create zoom 0
+
+		// map-reduce to create zoom
 		JavaPairRDD<String, byte[]> subImagesRDD = processedRDD.flatMapToPair(BaseFunction.to256SizedTiles);
 		JavaPairRDD<String, byte[]> subImagesCombinedRDD = subImagesRDD.reduceByKey(BaseFunction.combineImagesWithSameKey);
-		
-		// map-reduce to create zoom...
-		JavaPairRDD<String, ZoomTile> zoom1MapRDD = subImagesCombinedRDD.mapToPair(ZoomFunction.zoomMap);
-		JavaPairRDD<String, ZoomTile> zoom1ReducedRDD = zoom1MapRDD.reduceByKey(ZoomFunction.zoomReducer);
-		JavaPairRDD<String, byte[]> zoom1ResizedRDD = zoom1ReducedRDD.mapToPair(ZoomFunction.zoomResize);
-		
-		JavaPairRDD<String, ZoomTile> zoom2MapRDD = zoom1ResizedRDD.mapToPair(ZoomFunction.zoomMap);
-		JavaPairRDD<String, ZoomTile> zoom2ReducedRDD = zoom2MapRDD.reduceByKey(ZoomFunction.zoomReducer);
-		JavaPairRDD<String, byte[]> zoom2ResizedRDD = zoom2ReducedRDD.mapToPair(ZoomFunction.zoomResize);
-		
-		JavaPairRDD<String, ZoomTile> zoom3MapRDD = zoom2ResizedRDD.mapToPair(ZoomFunction.zoomMap);
-		JavaPairRDD<String, ZoomTile> zoom3ReducedRDD = zoom3MapRDD.reduceByKey(ZoomFunction.zoomReducer);
-		JavaPairRDD<String, byte[]> zoom3ResizedRDD = zoom3ReducedRDD.mapToPair(ZoomFunction.zoomResize);
-		
-		JavaPairRDD<String, ZoomTile> zoom4MapRDD = zoom3ResizedRDD.mapToPair(ZoomFunction.zoomMap);
-		JavaPairRDD<String, ZoomTile> zoom4ReducedRDD = zoom4MapRDD.reduceByKey(ZoomFunction.zoomReducer);
-		JavaPairRDD<String, byte[]> zoom4ResizedRDD = zoom4ReducedRDD.mapToPair(ZoomFunction.zoomResize);
-		
-		HBase.setUp();
-		
-		// create the tiles
-		if (args.length != 0){
-			switch (args[0]) {
-		        case "create-hbase":  {
-	        		HBase.createTable();
-		            break;
-	        	}
-		        case "0":  {
-		        	//createZoomPNG(subImagesCombinedRDD);
-			        addZoomHbase(subImagesCombinedRDD, HBase.ZOOM_0_FAMILY);
-			        break;
-		        	}
-		        case "1":  {
-	        		//createZoomPNG(zoom1ResizedRDD);
-		        	addZoomHbase(zoom1ResizedRDD, HBase.ZOOM_1_FAMILY);
-			        break;
-		        	}
-		        case "2":  {
-		        	//createZoomPNG(zoom2ResizedRDD);
-	        		addZoomHbase(zoom2ResizedRDD, HBase.ZOOM_2_FAMILY);
-		            break;
-	        	}
-		        case "3":  {
-		        	//createZoomPNG(zoom3ResizedRDD);
-	        		addZoomHbase(zoom3ResizedRDD, HBase.ZOOM_3_FAMILY);
-		            break;
-	        	}
-		        case "4":  {
-		        	//createZoomPNG(zoom4ResizedRDD);
-	        		addZoomHbase(zoom4ResizedRDD, HBase.ZOOM_4_FAMILY);
-		            break;
-	        	}
-		        case "test":  {
-		        	System.out.println("test");
-		    		ImageIO.write(HBase.saveImageFromHBase(), "png", new File("testSF" + ".png"));
-		        	break;
-		    	}
-		        default: {
-			        	System.out.println("Unknown command");
-			            break;
-			        }
-				}
-		}		
-		context.close();	
+
+		ToolRunner.run(HBaseConfiguration.create(), new HBase(), args);
+				
+		processAndHBase(subImagesCombinedRDD);
+
+		context.close();
 	}
-	
-	
+
+	/*
 	private static void createZoomPNG(JavaPairRDD<String, byte[]> rdd){
 		rdd.foreach(file -> {
 			ImageIO.write(Utils.byteStreamToBufferedImage(file._2), "png", new File(file._1 + ".png"));
 		});
-	}
-	
-	
-	private static void addZoomHbase(JavaPairRDD<String, byte[]> rdd, byte[] zoomLevel){
-		rdd.foreachPartition(partition -> {
-			HBase.setUp();
-			partition.forEachRemaining(file -> {
-				try {
-					HBase.addRow(file._1, file._2, zoomLevel);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			});
-		});
+	}*/
+
+	private static void processAndHBase(JavaPairRDD<String, byte[]> RDD0) throws IOException{
+		JavaPairRDD<String, byte[]> previousRDD = RDD0;
 		
+		previousRDD.cache();
+		
+		HBase.addZoomHbase(previousRDD, 0);
+
+		for (int i = 1; i < 12; i++){
+			JavaPairRDD<String, ZoomTile> zoomMapRDD = previousRDD.mapToPair(ZoomFunction.zoomMap);
+			JavaPairRDD<String, ZoomTile> zoomReducedRDD = zoomMapRDD.reduceByKey(ZoomFunction.zoomReducer);
+			JavaPairRDD<String, byte[]> zoomResizedRDD = zoomReducedRDD.mapToPair(ZoomFunction.zoomResize);
+			zoomResizedRDD.cache();
+			int zoom = i;
+			HBase.addZoomHbase(zoomResizedRDD, zoom);
+			previousRDD.unpersist();
+			previousRDD = zoomResizedRDD;
+		}
 	}
 }
