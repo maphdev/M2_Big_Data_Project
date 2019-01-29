@@ -1,9 +1,5 @@
 package bigdata;
-import java.io.File;
 import java.io.IOException;
-
-import javax.imageio.ImageIO;
-
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.spark.SparkConf;
@@ -30,18 +26,20 @@ public class SparkProgram {
 		// now we convert the bytes stream into shorts
 		JavaPairRDD<Tuple2<Integer, Integer>, short[]> processedRDD = importedRDD.mapToPair(BaseFunction.mapBytesToShorts);
 
-		// map-reduce to create zoom
+		// initial images
 		JavaPairRDD<String, byte[]> subImagesRDD = processedRDD.flatMapToPair(BaseFunction.to256SizedTiles);
 		JavaPairRDD<String, byte[]> subImagesCombinedRDD = subImagesRDD.reduceByKey(BaseFunction.combineImagesWithSameKey);
 
+		// create hbase
 		ToolRunner.run(HBaseConfiguration.create(), new HBase(), args);
-				
+		
+		// zooms
 		processAndHBase(subImagesCombinedRDD);
 
 		context.close();
 	}
 
-	/*
+	/* Create png from rdd -> only in order to test small datasets
 	private static void createZoomPNG(JavaPairRDD<String, byte[]> rdd){
 		rdd.foreach(file -> {
 			ImageIO.write(Utils.byteStreamToBufferedImage(file._2), "png", new File(file._1 + ".png"));

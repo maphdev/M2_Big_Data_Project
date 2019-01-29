@@ -11,7 +11,7 @@ public class ZoomFunction {
 	
 	private final static int tmpTileSize = 512;
 	
-	// gives tiles a key corresponding to their future position in the zoom tile
+	// gives tiles a key corresponding to their future position in the zoomed tile
 	public static PairFunction<Tuple2<String, byte[]>, String, ZoomTile> zoomMap = new PairFunction<Tuple2<String, byte[]>, String, ZoomTile>() {
 		private static final long serialVersionUID = 6295049499770038005L;
 	

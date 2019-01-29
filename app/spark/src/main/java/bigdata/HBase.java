@@ -1,12 +1,6 @@
 package bigdata;
 
-import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
-
-import javax.imageio.ImageIO;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -16,11 +10,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
-import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.util.Tool;
@@ -101,8 +91,6 @@ public class HBase extends Configured implements Tool {
   		Connection connection = ConnectionFactory.createConnection(conf);
   		Table table = connection.getTable(TableName.valueOf(TABLE_NAME));
   		
-  		//System.out.println(TABLE_NAME + " -> zoom : " + zoom + " & filename : " + tileName);
-
 		Put put = new Put(Bytes.toBytes(tileName));
 
 		byte[] family = getFamilyFromZoom(zoom);
@@ -121,7 +109,6 @@ public class HBase extends Configured implements Tool {
 			
 	  		while(partition.hasNext()){
 	  			try {
-					//HBase.addRow(file._1, file._2, zoom);
 	  				Tuple2<String, byte[]> file = partition.next();
 					Put put = new Put(Bytes.toBytes(file._1));
 
@@ -135,43 +122,8 @@ public class HBase extends Configured implements Tool {
 	  		}
 	  		
 	  		connection.close();
-	  		/*
-			partition.forEachRemaining(file -> {
-				try {
-					//HBase.addRow(file._1, file._2, zoom);
-					Put put = new Put(Bytes.toBytes(file._1));
-
-					byte[] family = getFamilyFromZoom(zoom);
-
-					put.addColumn(family, TILE_COLUMN, file._2);
-					table.put(put);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			});
-			*/
 		});
 	}
-
-	/*
-	public static int numberRowsPerFamily(int zoom) throws IOException {
-		Scan scan = new Scan();
-
-		byte[] family = getFamilyFromZoom(zoom);
-
-	    scan.addFamily(family);
-
-	    ResultScanner resultScanner = table.getScanner(scan);
-	    Iterator<Result> iterator = resultScanner.iterator();
-
-	    int i = 0;
-	    while (iterator.hasNext())
-	    {
-	        iterator.next();
-	        i+= 1;
-	    }
-	    return i;
-	}*/
 
 	private static byte[] getFamilyFromZoom(int zoom){
 		byte[] family = null;
@@ -215,24 +167,6 @@ public class HBase extends Configured implements Tool {
 		}
 		return family;
 	}
-
-	/*
-	public static BufferedImage saveImageFromHBase() throws IOException {
-		String tileName = "104-419";
-		byte[] row = Bytes.toBytes(tileName);
-
-		Get get = new Get(row);
-		get.addColumn(ZOOM_1_FAMILY, TILE_COLUMN);
-
-		System.out.println("hello");
-
-		Result res = table.get(get);
-		byte[] tile = res.getValue(ZOOM_1_FAMILY, TILE_COLUMN);
-
-		System.out.println(tile);
-
-		return Utils.byteStreamToBufferedImage(tile);
-	}*/
 
 	@Override
 	public int run(String[] arg0) throws Exception {

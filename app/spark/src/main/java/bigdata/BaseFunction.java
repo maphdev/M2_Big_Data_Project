@@ -59,7 +59,7 @@ public class BaseFunction {
 			Tuple2<Integer, Integer> tmpImgY = y_max <= (5 * Utils.smallTileSize)? new Tuple2<Integer, Integer>(minTgtPerTile, minSizeTmpImage): new Tuple2<Integer, Integer>(maxTgtPerTile, maxSizeTmpImage);
 			Tuple2<Integer, Integer> tmpImgX = x_max <= (5 * Utils.smallTileSize)? new Tuple2<Integer, Integer>(minTgtPerTile, minSizeTmpImage): new Tuple2<Integer, Integer>(maxTgtPerTile, maxSizeTmpImage);
 
-			// here we start the big work
+			// here we start the magical work
 			BufferedImage image = new BufferedImage(tmpImgX._2, tmpImgY._2, BufferedImage.TYPE_INT_ARGB);
 			
 			short[] heights = file._2;

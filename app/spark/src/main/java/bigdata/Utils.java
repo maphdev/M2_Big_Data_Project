@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import javax.imageio.ImageIO;
-
 import scala.Tuple2;
 
 public class Utils {
@@ -45,12 +44,10 @@ public class Utils {
 	}
 	
 	public static short[] convertByteArrayToShortArray (byte[] bytes) {
-		// convert
 		short[] shorts = new short[tileSize * tileSize];
 		if (shorts.length == bytes.length/2){
 			ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN).asShortBuffer().get(shorts).rewind();
 		}
-		// correct
 		for (int i = 0; i < shorts.length; i++){
 			if (shorts[i] < 0)
 				shorts[i] = 0;
@@ -123,7 +120,6 @@ public class Utils {
 	    boolean scaleDown = scale < 1;
 	
 	    if (scaleDown) {
-	        // multi-pass bilinear div 2
 	        int currentW = image.getWidth();
 	        int currentH = image.getHeight();
 	        BufferedImage resized = image;

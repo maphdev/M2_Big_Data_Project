@@ -6,9 +6,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 public class ZoomTile implements Serializable {
-	/**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 2113177953332563490L;
 	private byte[] image;
 	private int xTile;
@@ -91,5 +89,5 @@ public class ZoomTile implements Serializable {
 		 this.yPos = is.readInt();
 		 this.processedInMap = is.readBoolean();
 		 this.image = (byte[])is.readObject();
-	    }
+	 }
 }
