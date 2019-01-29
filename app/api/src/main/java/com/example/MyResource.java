@@ -35,8 +35,6 @@ public class MyResource {
     @Produces("image/png")
     public Response getImage(@PathParam("x") String x, @PathParam("y") String y, @PathParam("z") String z) throws IOException {
         HBase.setUp();
-        //byte[] tiles = HBase.getImageFromHBase("418", "104", "1");
-        //return Response.ok(tiles).build();
 
         byte[] tiles = HBase.getImageFromHBase(x,y,z);
         if (tiles == null) {

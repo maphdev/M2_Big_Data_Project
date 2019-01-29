@@ -14,7 +14,14 @@ public class HBase extends Configured {
     public static final byte[] ZOOM_1_FAMILY = Bytes.toBytes("zoom_1");
     public static final byte[] ZOOM_2_FAMILY = Bytes.toBytes("zoom_2");
     public static final byte[] ZOOM_3_FAMILY = Bytes.toBytes("zoom_3");
-    public static final byte[] ZOOM_4_FAMILY = Bytes.toBytes("zoom_4");
+    private static final byte[] ZOOM_4_FAMILY = Bytes.toBytes("zoom_4");
+    private static final byte[] ZOOM_5_FAMILY = Bytes.toBytes("zoom_5");
+    private static final byte[] ZOOM_6_FAMILY = Bytes.toBytes("zoom_6");
+    private static final byte[] ZOOM_7_FAMILY = Bytes.toBytes("zoom_7");
+    private static final byte[] ZOOM_8_FAMILY = Bytes.toBytes("zoom_8");
+    private static final byte[] ZOOM_9_FAMILY = Bytes.toBytes("zoom_9");
+    private static final byte[] ZOOM_10_FAMILY = Bytes.toBytes("zoom_10");
+    private static final byte[] ZOOM_11_FAMILY = Bytes.toBytes("zoom_11");
     private static final byte[] TILE_COLUMN = Bytes.toBytes("tile");
 
     private static Connection connection;
@@ -38,16 +45,41 @@ public class HBase extends Configured {
         byte[] family;
         switch (z) {
             case "0":
-                family = ZOOM_0_FAMILY;
+                family = ZOOM_11_FAMILY;
                 break;
             case "1":
-                family = ZOOM_1_FAMILY;
+                family = ZOOM_10_FAMILY;
                 break;
-                /*
             case "2":
+                family = ZOOM_9_FAMILY;
+                break;
+            case "3":
+                family = ZOOM_8_FAMILY;
+                break;
+            case "4":
+                family = ZOOM_7_FAMILY;
+                break;
+            case "5":
+                family = ZOOM_6_FAMILY;
+                break;
+            case "6":
+                family = ZOOM_5_FAMILY;
+                break;
+            case "7":
+                family = ZOOM_4_FAMILY;
+                break;
+            case "8":
+                family = ZOOM_3_FAMILY;
+                break;
+            case "9":
                 family = ZOOM_2_FAMILY;
                 break;
-                */
+            case "10":
+                family = ZOOM_1_FAMILY;
+                break;
+            case "11":
+                family = ZOOM_0_FAMILY;
+                break;
             default:
                 return null;
         }

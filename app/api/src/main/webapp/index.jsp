@@ -51,7 +51,7 @@
         L.TileLayer.Kitten = L.TileLayer.extend({
 
             getTileUrl: function(coords) {
-                var z = 11 - Math.abs(z);
+                var z = Math.abs(z);
                 console.log(coords.x + " " + coords.y + " " + coords.z);
                 return '/Project/webapi/api/tiles/' + coords.x + '/' + coords.y + '/' + z;
             }
