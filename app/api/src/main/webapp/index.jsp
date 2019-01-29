@@ -26,26 +26,6 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 
     <script type="text/javascript">
-        /*
-        L.TileLayer.CustomLayer = L.TileLayer.extend({
-            getTileUrl: function (coords) {
-                coords.z = -12;
-                console.log(coords.x + ", " + coords.y + ", " + coords.z);
-                return L.TileLayer.prototype.getTileUrl.call(this, coords);
-            }
-        });
-
-        L.tileLayer.customLayer = function (templateUrl, options) {
-            return new L.TileLayer.CustomLayer(templateUrl, options);
-        }
-
-        var mymap = L.map('mapid').setView([51.505, -0.09], 0);
-        L.tileLayer.customLayer('http://10.0.5.19:8080/Project/webapi/api/tiles/{x}/{y}/{y}', {
-            minZoom: 12,
-            maxZoom: 12,
-        }).addTo(mymap);
-        */
-
         var map = L.map('mapid').setView([10, 10], 11);
 
         L.TileLayer.Kitten = L.TileLayer.extend({
@@ -55,10 +35,6 @@
                 console.log(coords.x + " " + coords.y + " " + coords.z);
                 return '/Project/webapi/api/tiles/' + coords.x + '/' + coords.y + '/' + z;
             }
-            /*
-            getTileUrl: function(coords) {
-                return '/Project/webapi/api/tiles/0/0/0/';
-            }*/
         });
 
         L.tileLayer.kitten = function() {
