@@ -51,8 +51,10 @@ public class Utils {
 		for (int i = 0; i < shorts.length; i++){
 			if (shorts[i] < 0)
 				shorts[i] = 0;
+			/*
 			if (shorts[i] > 255)
 				shorts[i] = 255;
+			*/
 		}
 		return shorts;
 	}
@@ -63,22 +65,26 @@ public class Utils {
 			r = 14;
 			g = 93;
 			b = 183;
-		} else if((height > 0) && (height <= 85)) {
+		} else if((height > 0) && (height <= 255)) {
 			r = 0;
-			g = 85 + height*2;
+			g = 85 + height * 2/3;
 			b = 85;
-		} else if(height > 85 && height <= 170) {
-			r = 85 + height * 2;
+		} else if(height > 85 && height <= 1020) {
+			r = 85 + height / 6;
 			g = 255;
 			b = 85;
-		}else if(height > 170 && height <= 254) {
-			r = 220 - height;
-			g = 220 - height;
-			b = 110 - height;
-		}else if(height == 255) {
-			r = 80;
-			g = 80;
-			b = 10;
+		}else if(height > 1020 && height <= 2040) {
+			r = 255 - height / 8;
+			g = 255 - height / 8;
+			b = 85 - height / 24;
+		}else if(height > 2040 && height <= 3060) {
+			r = 0 + height / 12;
+			g = 0 + height / 12;
+			b = 0 + height / 12;
+		} else if(height > 3600) {
+			r = 255;
+			g = 255;
+			b = 255;
 		}
 		return (255<<24) | (r<<16) | (g<<8) | b;
 	}

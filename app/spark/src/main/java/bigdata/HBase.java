@@ -19,7 +19,7 @@ import org.apache.spark.api.java.JavaPairRDD;
 import scala.Tuple2;
 
 public class HBase extends Configured implements Tool {
-	private static final byte[] TABLE_NAME = Bytes.toBytes("team-rocket");
+	private static final byte[] TABLE_NAME = Bytes.toBytes("team-rocket-ml");
     private static final byte[] ZOOM_0_FAMILY = Bytes.toBytes("zoom_0");
     private static final byte[] ZOOM_1_FAMILY = Bytes.toBytes("zoom_1");
     private static final byte[] ZOOM_2_FAMILY = Bytes.toBytes("zoom_2");
