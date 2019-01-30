@@ -18,6 +18,7 @@
     <style>
         #mapid {
             height: 800px;
+            background-color: rgb(14, 93, 183);
         }
     </style>
 </head>
@@ -26,14 +27,13 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 
     <script type="text/javascript">
-        var map = L.map('mapid').setView([10, 10], 11);
+        var map = L.map('mapid', {minZoom: 0, maxZoom: 11}).setView([0, 0], 0);
 
         L.TileLayer.Kitten = L.TileLayer.extend({
 
             getTileUrl: function(coords) {
-                var z = Math.abs(z);
                 console.log(coords.x + " " + coords.y + " " + coords.z);
-                return '/Project/webapi/api/tiles/' + coords.x + '/' + coords.y + '/' + z;
+                return '/Project/webapi/tiles/' + coords.x + '/' + coords.y + '/' + coords.z;
             }
         });
 

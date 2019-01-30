@@ -10,10 +10,10 @@ import java.io.IOException;
 
 public class HBase extends Configured {
     private static final byte[] TABLE_NAME = Bytes.toBytes("team-rocket");
-    public static final byte[] ZOOM_0_FAMILY = Bytes.toBytes("zoom_0");
-    public static final byte[] ZOOM_1_FAMILY = Bytes.toBytes("zoom_1");
-    public static final byte[] ZOOM_2_FAMILY = Bytes.toBytes("zoom_2");
-    public static final byte[] ZOOM_3_FAMILY = Bytes.toBytes("zoom_3");
+    private static final byte[] ZOOM_0_FAMILY = Bytes.toBytes("zoom_0");
+    private static final byte[] ZOOM_1_FAMILY = Bytes.toBytes("zoom_1");
+    private static final byte[] ZOOM_2_FAMILY = Bytes.toBytes("zoom_2");
+    private static final byte[] ZOOM_3_FAMILY = Bytes.toBytes("zoom_3");
     private static final byte[] ZOOM_4_FAMILY = Bytes.toBytes("zoom_4");
     private static final byte[] ZOOM_5_FAMILY = Bytes.toBytes("zoom_5");
     private static final byte[] ZOOM_6_FAMILY = Bytes.toBytes("zoom_6");
@@ -24,24 +24,37 @@ public class HBase extends Configured {
     private static final byte[] ZOOM_11_FAMILY = Bytes.toBytes("zoom_11");
     private static final byte[] TILE_COLUMN = Bytes.toBytes("tile");
 
-    private static Connection connection;
     private static Table table;
 
     public static void setUp() throws IOException {
-        Configuration conf = HBaseConfiguration.create();
-        conf.set("hbase.zookeeper.quorum", "10.0.5.25");
-        conf.set("hbase.zookeeper.property.clientPort", "2181");
-        connection = ConnectionFactory.createConnection(conf);
-        table = connection.getTable(TableName.valueOf(TABLE_NAME));
+        table = MyResource.con.getTable(TableName.valueOf(TABLE_NAME));
     }
 
     public static byte[] getImageFromHBase(String x, String y, String z)  {
-        //String tileName = "104-419";
         String tileName = y+"-"+x;
         byte[] row = Bytes.toBytes(tileName);
+        byte[] family = getFamilyFromZoom(z);
 
         Get get = new Get(row);
 
+        get.addColumn(family, TILE_COLUMN);
+
+        Result res;
+        byte[] tile = null;
+        try {
+            res = table.get(get);
+            if (res.isEmpty()){
+                tile = HBase.getImageFromHBase("418", "104", "10");
+            } else {
+                tile = res.getValue(family, TILE_COLUMN);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return tile;
+    }
+
+    public static byte[] getFamilyFromZoom(String z) {
         byte[] family;
         switch (z) {
             case "0":
@@ -83,20 +96,6 @@ public class HBase extends Configured {
             default:
                 return null;
         }
-
-        get.addColumn(family, TILE_COLUMN);
-
-        Result res = null;
-        try {
-            res = table.get(get);
-            if (res.isEmpty()) {
-                return HBase.getImageFromHBase("418", "104", "1");
-            } else {
-                byte[] tile = res.getValue(family, TILE_COLUMN);
-                return tile;
-            }
-        } catch (IOException e) {
-            return HBase.getImageFromHBase("418", "104", "1");
-        }
+        return family;
     }
 }
